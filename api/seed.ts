@@ -67,7 +67,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     { id: 'p25', title: 'Eight Mile Roundabout Showroom', address: 'Eight Mile Roundabout, Uyo', price_label: '₦260,000,000', category: 'Commercial', status: 'for_sale', agent_name: 'Ime Akpan', created_at: daysAgo(16) },
     { id: 'p26', title: 'Etinan Road Residential Land', address: 'Etinan Road, Uyo', price_label: '₦32,000,000', category: 'Land', status: 'sold', agent_name: 'Ekemini Bassi', created_at: daysAgo(66) },
   ];
-  await insertAll('rep_property', props);
+  // Category-matched photos shipped in public/properties/.
+  const IMAGE_BY_ID: Record<string, string> = {
+    p1: 'prop-45', p2: 'prop-21', p3: 'prop-43', p4: 'prop-48', p5: 'prop-47', p6: 'prop-46',
+    p7: 'prop-02', p8: 'prop-42', p9: 'prop-60', p10: 'prop-55', p11: 'prop-41', p12: 'prop-53',
+    p13: 'prop-50', p14: 'prop-54', p15: 'prop-44', p16: 'prop-61', p17: 'prop-01', p18: 'prop-57',
+    p19: 'prop-51', p20: 'prop-59', p21: 'prop-52', p22: 'prop-03', p23: 'prop-04', p24: 'prop-22',
+    p25: 'prop-58', p26: 'prop-56',
+  };
+  await insertAll(
+    'rep_property',
+    props.map((p) => ({ ...p, image_url: `/properties/${IMAGE_BY_ID[p.id]}` })),
+  );
 
   // 34 inquiries over 14 days: 9 unanswered (6 past the 4h SLA), 18 replied, 7 closed.
   const inquiries: SeedInquiry[] = [

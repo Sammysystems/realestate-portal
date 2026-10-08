@@ -6,6 +6,7 @@ export type Property = {
   category: string;
   status: string;
   agent_name: string | null;
+  image_url: string | null;
   created_at: string;
 };
 
