@@ -37,7 +37,6 @@ export const patchProperty = (id: string, patch: Record<string, unknown>) =>
 
 export type InquireResult = {
   ok: boolean;
-  inquiry_id: number;
   matched_property: string | null;
   reply: { subject: string; body: string; sent: boolean; to: string };
   logged: boolean;

@@ -1,7 +1,15 @@
-import { Card, Empty } from './ui';
+import { Avatar, Empty, Select, TableShell, TD_CLS, TH_CLS, TR_CLS } from './ui';
+import { CHART_COLORS, StatusSplit, type Segment } from './charts';
 import type { Property } from '../types';
 
 const daysOn = (created_at: string) => Math.max(1, Math.round((Date.now() - new Date(created_at).getTime()) / 86_400_000));
+
+const STATUS_COLOR: Record<string, string> = {
+  for_sale: CHART_COLORS[0],
+  under_offer: CHART_COLORS[1],
+  let: CHART_COLORS[4],
+  sold: CHART_COLORS[2],
+};
 
 export function Properties({
   properties,
@@ -12,21 +20,33 @@ export function Properties({
   inquiryCounts: Record<string, number>;
   onStatus: (id: string, status: string) => void;
 }) {
+  const statuses = ['for_sale', 'under_offer', 'let', 'sold'];
+  const segments: Segment[] = statuses.map((s) => ({
+    label: s.replace('_', ' '),
+    value: properties.filter((p) => p.status === s).length,
+    color: STATUS_COLOR[s],
+  }));
+
   return (
-    <Card className="overflow-hidden p-0">
-      <div className="border-b border-slate-800 px-4 py-3">
-        <h2 className="font-semibold">Properties</h2>
+    <div className="space-y-4">
+      <div className="rounded-lg border border-line bg-card px-4 py-3.5 shadow-hair">
+        <div className="mb-2.5 flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-semibold text-ink">Portfolio mix</h2>
+          <span className="text-xs text-ink-faint tabular-nums">{properties.length} properties</span>
+        </div>
+        <StatusSplit segments={segments} />
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-2">Property</th>
-              <th className="px-4 py-2">Price</th>
-              <th className="px-4 py-2">Status</th>
-              <th className="px-4 py-2">Days on market</th>
-              <th className="px-4 py-2">Inquiries</th>
-              <th className="px-4 py-2">Agent</th>
+
+      <TableShell title="All properties">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="bg-linen-warm/50">
+              <th className={TH_CLS}>Property</th>
+              <th className={TH_CLS}>Price</th>
+              <th className={TH_CLS}>Status</th>
+              <th className={TH_CLS}>Days on market</th>
+              <th className={TH_CLS}>Inquiries</th>
+              <th className={TH_CLS}>Agent</th>
             </tr>
           </thead>
           <tbody>
@@ -38,33 +58,46 @@ export function Properties({
               </tr>
             )}
             {properties.map((p) => (
-              <tr key={p.id} className="border-t border-slate-800/70">
-                <td className="px-4 py-2">
-                  <p className="font-medium text-slate-200">{p.title}</p>
-                  {p.address && <p className="text-xs text-slate-500">{p.address}</p>}
+              <tr key={p.id} className={TR_CLS}>
+                <td className={TD_CLS}>
+                  <p className="font-medium text-ink">{p.title}</p>
+                  {p.address && <p className="text-xs text-ink-faint">{p.address}</p>}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap">{p.price_label ?? '—'}</td>
-                <td className="px-4 py-2">
-                  <select
+                <td className={`${TD_CLS} font-medium whitespace-nowrap tabular-nums`}>{p.price_label ?? '—'}</td>
+                <td className={TD_CLS}>
+                  <Select
                     value={p.status}
-                    onChange={(e) => onStatus(p.id, e.target.value)}
-                    className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-xs"
-                  >
-                    {['for_sale', 'under_offer', 'let', 'sold'].map((s) => (
-                      <option key={s} value={s}>
-                        {s.replace('_', ' ')}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => onStatus(p.id, v)}
+                    options={statuses}
+                    ariaLabel={`Status for ${p.title}`}
+                    className="text-xs"
+                  />
                 </td>
-                <td className="px-4 py-2">{daysOn(p.created_at)}d</td>
-                <td className="px-4 py-2">{inquiryCounts[p.id] ?? 0}</td>
-                <td className="px-4 py-2 text-slate-400">{p.agent_name ?? '—'}</td>
+                <td className={`${TD_CLS} tabular-nums`}>{daysOn(p.created_at)}d</td>
+                <td className={TD_CLS}>
+                  <span
+                    className={`inline-block min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-semibold tabular-nums ${
+                      (inquiryCounts[p.id] ?? 0) > 0 ? 'bg-forest/10 text-forest' : 'text-ink-faint'
+                    }`}
+                  >
+                    {inquiryCounts[p.id] ?? 0}
+                  </span>
+                </td>
+                <td className={TD_CLS}>
+                  {p.agent_name ? (
+                    <span className="flex items-center gap-2 text-ink-soft">
+                      <Avatar name={p.agent_name} size={24} />
+                      {p.agent_name}
+                    </span>
+                  ) : (
+                    <span className="text-ink-faint">—</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-    </Card>
+      </TableShell>
+    </div>
   );
 }
