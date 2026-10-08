@@ -121,7 +121,12 @@ export function dueFollowUps(
   const open = inquiries.filter((i) => i.status !== 'closed');
   const out: Array<{ inquiry: Inquiry; last_touch_hours: number }> = [];
   for (const i of open) {
-    const touch = log.filter((l) => l.recipient === i.email).slice(-1)[0]?.created_at ?? i.created_at;
+    // Newest dispatched entry for this recipient — order-independent (the board
+    // window is newest-first, so index-based "last" would pick the oldest).
+    let touch = i.created_at;
+    for (const l of log) {
+      if (l.dispatched && l.recipient === i.email && l.created_at > touch) touch = l.created_at;
+    }
     const since = hoursBetween(touch, now);
     if (since >= 24) out.push({ inquiry: i, last_touch_hours: Math.floor(since) });
   }
@@ -155,10 +160,14 @@ export function dueOverdueAlerts(
   const computed = computeDeals(deals, now).filter((d) => d.overdue);
   return computed
     .filter((d) => {
-      const lastAlert = [...log]
-        .reverse()
-        .find((l) => l.kind === 'overdue_alert' && l.note === `deal:${d.id}`);
-      return !lastAlert || hoursBetween(lastAlert.created_at, now) >= 24;
+      const note = `deal:${d.id}`;
+      let lastAlert: string | undefined;
+      for (const l of log) {
+        if (l.kind === 'overdue_alert' && l.note === note && (!lastAlert || l.created_at > lastAlert)) {
+          lastAlert = l.created_at;
+        }
+      }
+      return !lastAlert || hoursBetween(lastAlert, now) >= 24;
     })
     .map((deal) => ({ deal }));
 }
