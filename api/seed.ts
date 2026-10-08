@@ -77,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   };
   await insertAll(
     'rep_property',
-    props.map((p) => ({ ...p, image_url: `/properties/${IMAGE_BY_ID[p.id]}` })),
+    props.map((p) => ({ ...p, image_url: `/properties/${IMAGE_BY_ID[p.id]}.jpg` })),
   );
 
   // 34 inquiries over 14 days: 9 unanswered (6 past the 4h SLA), 18 replied, 7 closed.
