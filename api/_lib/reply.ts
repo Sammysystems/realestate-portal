@@ -77,7 +77,7 @@ export function buildAutoReply(p: ParsedReply): { subject: string; body: string 
       `${p.property.title} — ${p.property.status ? STATUS_LABEL[p.property.status] ?? p.property.status : 'on the market'}${price}.\n` +
       `${p.property.address ? `Location: ${p.property.address}\n` : ''}` +
       `${p.property.agent_name ? `Handled by: ${p.property.agent_name}\n` : ''}\n` +
-      `If you'd like to see it, book an inspection here and we'll confirm your slot: ${process.env.APP_URL ?? '#'}/book\n\n` +
+      `If you'd like to see it, reply here or open the portal to book a slot: ${process.env.APP_URL ?? '#'}\n\n` +
       `Reply to this email anytime for more detail.\n\n` +
       `Agency Ops Desk`,
   };
