@@ -44,8 +44,3 @@ export type InquireResult = {
 
 export const submitInquiry = (payload: { name: string; phone: string; email?: string; message: string }) =>
   request<InquireResult>('/api/inquire', { method: 'POST', body: JSON.stringify(payload) });
-
-export const seedDemo = () =>
-  request('/api/seed', { method: 'POST', body: '{}' }, { admin: true }).catch((e) => {
-    throw e;
-  });

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Board } from './types';
-import { getToken, loadBoard, patchDeal, patchInspection, patchProperty, runAction, seedDemo, setToken, submitInquiry } from './lib/api';
+import { getToken, loadBoard, patchDeal, patchInspection, patchProperty, runAction, setToken, submitInquiry } from './lib/api';
 import { Button, Card, Toast, inputCls } from './components/ui';
 import { Dashboard } from './components/Dashboard';
 import { Properties } from './components/Properties';
@@ -130,16 +130,6 @@ export default function App() {
     }
   };
 
-  const onSeed = async () => {
-    try {
-      await seedDemo();
-      await refresh();
-      flash({ tone: 'ok', text: 'Demo data seeded. Board reflects a fresh "today".' });
-    } catch (e) {
-      flash({ tone: 'err', text: e instanceof Error ? e.message : String(e) });
-    }
-  };
-
   if (!authed) return <Login onOpen={(t) => { setToken(t); setAuthed(true); }} />;
 
   const current = NAV.find((n) => n.id === tab) ?? NAV[0];
@@ -207,9 +197,9 @@ export default function App() {
         </button>
       </div>
       {navItems}
-      <div className="px-4 py-4 text-[11px] leading-relaxed text-linen/55">
-        <p className="font-medium text-linen/80">Demo board</p>
-        <p>Seed resets a fresh &ldquo;today&rdquo;. Token-gated.</p>
+      <div className="border-t border-white/10 px-4 py-4 text-[11px] leading-relaxed text-linen/55">
+        <p className="font-medium text-linen/80">Akwa Ibom &middot; Uyo</p>
+        <p>Property desk &mdash; live board.</p>
       </div>
     </>
   );
@@ -247,9 +237,6 @@ export default function App() {
               <p className="hidden truncate text-xs text-ink-faint sm:block">{current.sub}</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <Button variant="ghost" onClick={onSeed} title="Seed demo data (SEED_ENABLED must be true)" className="hidden sm:inline-flex">
-                Seed demo
-              </Button>
               <Button onClick={() => setShowIntake(true)}>
                 <Plus className="h-4 w-4" />
                 New inquiry
