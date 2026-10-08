@@ -1,69 +1,88 @@
 # Real Estate Ops Desk
 
-One screen for a real-estate agency: properties, inquiries, land-search (C of O)
-pipelines, inspections and follow-ups — with the money-eating stalls visible the
-moment they happen.
+Agencies don't lose deals in the office. They lose them in the gaps: a lead
+waiting nine hours for a first reply, a land search stalled eighteen days
+before anyone notices, a follow-up remembered on Friday for a Tuesday inquiry.
+Nobody can say who was emailed what, or when.
 
-## What it does
+This system closes those gaps. One screen where every lead carries a clock,
+every stall is flagged the day it happens, and the reply goes out before the
+buyer moves on to the next listing.
 
-- **Inquiry pipeline with a response clock** — every lead shows how long it's sat,
-  and anything unanswered past 4 hours is flagged.
-- **Auto first-reply** — submitting an inquiry fires an email instantly. Facts
-  (property, price, status, agent) always come from the database; the LLM only
-  polishes wording, and the deterministic reply stands if the model is off,
-  slow, or absent. No hallucination is possible by construction.
-- **Land-search board** — each deal's title/C-of-O stage with a per-stage SLA.
-  Stalled deals are flagged with days overdue.
-- **Inspections** — bookings with confirm / reminder / done states.
-- **Follow-up center** — open inquiries with no touch in 24h+ are computed live.
-- **Email log** — every dispatch recorded (kind, recipient, subject, state).
+**Live demo:** https://realestate-portal-ten.vercel.app
+(login: any token set as `REP_ADMIN_TOKEN` — seed data included)
 
-### Fire-on-click, not fire-on-a-clock
+## The problem
 
-Nothing here is scheduled. "Overdue alerts", "follow-up runs" and "inspection
-reminders" are **on-screen buttons**: they compute what is owed live and dispatch
-the emails synchronously. The whole system demos end-to-end in one sitting.
+- **Silent leads.** Website inquiries land in nobody's inbox. By the time
+  someone reads the message, the buyer has inquired with three other agencies.
+- **Invisible stalls.** A land-search deal sits in "docs" for two weeks. No
+  alarm, no list — just a client who quietly stopped calling.
+- **Memory-driven follow-ups.** Chasing people happens when someone remembers,
+  which means it happens late, or it doesn't happen.
+- **No proof.** When a client asks "did you ever email me about that?", the
+  answer lives in someone's personal inbox.
 
-> Production hardening path (not in this build): a cron on `api/actions` firing
-> the same endpoints on a schedule, and webhook intake instead of the form.
+## The outcome
+
+- **First reply in minutes, not hours.** Every inquiry triggers an automatic
+  email built from the matched property's real price, status and agent. A
+  4-hour SLA clock runs on each lead; breaches show up in red on the board.
+- **Stalls surface themselves.** Every land-search stage has a day limit
+  (new 3 · search 5 · docs 7 · consent 10 · exchange 14). Overdue deals show
+  days-over and fire an alert with one click.
+- **The board says what's owed today.** Leads untouched for 24h+, deals past
+  stage SLA, inspections needing reminders — computed live, dispatched via
+  one button each. Nothing owed is ever off-screen.
+- **Every send is on record.** Kind, recipient, subject, body, state — a
+  dispatch history that includes the failures, not just the wins.
+
+## What's on the board
+
+| View | The question it answers |
+| --- | --- |
+| Dashboard | How healthy is today? Stat row, reply-speed gauge, 14-day inquiry bars, deal donut, portfolio split |
+| Properties | What do we have? Photo cards — price, days on market, status, agent, inquiry count |
+| Inquiries | Who's waiting? Pipeline ordered by wait time, SLA breaches flagged |
+| Land search | Which deals are stuck? Stage stepper, per-stage SLA, days overdue |
+| Inspections | Who's visiting when? Today / tomorrow groups, confirm → remind → done |
+| Follow-ups | Who did we forget? Owed lists, one-click dispatch |
+| Email log | What actually went out? Full history incl. failed sends |
+
+## How the auto-reply stays honest
+
+Facts never come from the model. The reply is assembled from the matched
+database row — title, price, status, location, agent — and an LLM (optional,
+OpenRouter) only rewrites the wording. Model down, slow, or missing: the
+deterministic reply ships as-is. A hallucinated price is structurally
+impossible here, not unlikely.
+
+## Fire-on-click, not fire-on-a-clock
+
+Nothing in this build is scheduled. Follow-up runs, overdue alerts and
+inspection reminders are on-screen buttons that compute what is owed *right
+now* and dispatch synchronously. The whole system demos end-to-end in one
+sitting.
+
+> Production hardening path (deliberately not built): a cron calling
+> `api/actions` on a schedule, and webhook intake instead of the form.
 
 ## Stack
 
-- React + Vite + Tailwind (frontend, static)
-- Vercel serverless `api/*` (the endpoints below)
-- InsForge Postgres (shared backend, lowercase `rep_*` tables)
-- OpenRouter (optional wording polish only — deterministic fallback)
-- SMTP via Resend (nodemailer)
+- React 19 + Vite + Tailwind v4 — hand-rolled SVG charts, zero chart deps
+- Vercel serverless `api/*` (7 endpoints)
+- InsForge Postgres — lowercase `rep_*` tables, migrations in `migrations/`
+- Resend SMTP via nodemailer
+- Optional OpenRouter polish (deterministic fallback always ships)
 
-## API
-
-| Endpoint | Method | Auth | Purpose |
-| --- | --- | --- | --- |
-| `/api/board` | GET | admin | full board: computed lists + "due now" sets + stats |
-| `/api/inquire` | POST | public | intake → saves inquiry → auto first-reply → log |
-| `/api/properties` | GET/POST/PATCH | admin | catalogue CRUD |
-| `/api/deals` | GET/POST/PATCH | admin | land-search stages + touch (resets stall clock) |
-| `/api/inspections` | GET/POST/PATCH | admin | bookings + status |
-| `/api/actions` | POST | admin | `follow-ups` \| `overdue-alerts` \| `reminders` sync dispatch |
-| `/api/seed` | POST | admin + `SEED_ENABLED` | demo fixture (relative timestamps) |
-
-## Run it
+## Quick start
 
 ```bash
 npm install
-cp .env.example .env.local   # fill from your InsForge/SMTP/OpenRouter keys
-npx tsc --noEmit
-npm run build
+cp .env.example .env.local     # fill in InsForge / SMTP / admin token keys
+npx -y @insforge/cli db migrations up --all
+npm run dev                    # http://localhost:3000
 ```
 
-Apply `migrations/001_create_tables.sql` in the InsForge SQL editor, then:
-
-```bash
-vercel --prod --yes
-# set the .env.local values as Vercel env vars, REP_ADMIN_TOKEN + SEED_ENABLED=true
-curl -X POST https://<site>.vercel.app/api/seed -H "Authorization: Bearer <token>"
-```
-
-Seed data uses timestamps relative to *now*, so the board always reads like a
-live "today": a 6-hour-unanswered hot inquiry, a land search stalled 17 days,
-inspections tomorrow, follow-ups owed.
+Full setup, data model, API reference, SLA rules, deploy workflow and the
+gotchas that burned us: **[ONBOARDING.md](./ONBOARDING.md)**
