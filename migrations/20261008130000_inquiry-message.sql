@@ -1,0 +1,1 @@
+alter table rep_inquiry add column if not exists message text;
