@@ -22,3 +22,4 @@ dist
 .vercel
 .env*
 !.env.example
+*.log

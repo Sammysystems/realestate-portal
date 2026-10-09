@@ -136,6 +136,83 @@
     opacity: 1;
   }
 }
+
+/* voice agent orb — LandsandHousing gold/olive accents */
+@keyframes desk-ring {
+  from {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+@keyframes desk-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes desk-bounce {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.desk-ring {
+  animation: desk-ring 1.8s var(--ease-premium) infinite;
+}
+.desk-spin {
+  animation: desk-spin 1s linear infinite;
+}
+.desk-bar {
+  animation: desk-bounce 0.9s ease-in-out infinite;
+  transform-origin: bottom;
+}
+@keyframes desk-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+@keyframes desk-pulse {
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+}
+@keyframes desk-soft {
+  0%,
+  100% {
+    box-shadow: 0 10px 30px rgba(23, 23, 22, 0.22);
+  }
+  50% {
+    box-shadow: 0 10px 34px rgba(177, 138, 74, 0.5);
+  }
+}
+.desk-bounce {
+  animation: desk-bob 1s ease-in-out infinite;
+  transform-origin: center;
+}
+.desk-pulse {
+  animation: desk-pulse 1s ease-in-out infinite;
+}
+.desk-pulse-soft {
+  animation: desk-soft 2.4s ease-in-out infinite;
+}
 .anim-rise {
   animation: rise-in 0.24s var(--ease-premium) both;
 }

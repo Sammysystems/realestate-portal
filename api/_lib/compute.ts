@@ -19,6 +19,7 @@ export type Inquiry = {
   name: string;
   phone: string | null;
   email: string | null;
+  message: string | null;
   channel: string;
   status: string;
   first_reply_sent_at: string | null;

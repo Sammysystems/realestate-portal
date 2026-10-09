@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { Board } from './types';
 import { getToken, loadBoard, patchDeal, patchInspection, patchProperty, runAction, setToken, submitInquiry } from './lib/api';
 import { Button, Card, Toast, inputCls } from './components/ui';
+import { AskDeskVoice } from './components/AskDeskVoice';
 import { Dashboard } from './components/Dashboard';
 import { Properties } from './components/Properties';
 import { Inquiries } from './components/Inquiries';
@@ -269,6 +270,7 @@ export default function App() {
       </div>
 
       {toast && <Toast tone={toast.tone} text={toast.text} onClose={() => setToast(null)} />}
+      <AskDeskVoice />
       {showIntake && <IntakeModal onSubmit={onIntakeSubmit} onClose={() => setShowIntake(false)} properties={board?.properties ?? []} />}
     </div>
   );

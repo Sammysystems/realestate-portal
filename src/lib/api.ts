@@ -35,6 +35,18 @@ export const patchInspection = (id: number, patch: Record<string, unknown>) =>
 export const patchProperty = (id: string, patch: Record<string, unknown>) =>
   request('/api/properties', { method: 'PATCH', body: JSON.stringify({ id, ...patch }) }, { admin: true });
 
+export type EmailDraft = { to: string; subject: string; body: string };
+
+export type AskResult = { answer: string; used: string; model: string | null; email?: EmailDraft | null };
+
+export const askDesk = (question: string) =>
+  request<AskResult>('/api/ask', { method: 'POST', body: JSON.stringify({ question }) }, { admin: true });
+
+export type EmailResult = { ok: boolean; to: string; error?: string | null };
+
+export const sendDraft = (d: EmailDraft) =>
+  request<EmailResult>('/api/email', { method: 'POST', body: JSON.stringify(d) }, { admin: true });
+
 export type InquireResult = {
   ok: boolean;
   matched_property: string | null;
