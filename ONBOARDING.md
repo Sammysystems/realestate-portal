@@ -47,7 +47,8 @@ on every API call. Same token works with curl.
 | `REP_ADMIN_TOKEN` | yes | the single admin credential |
 | `APP_URL` | yes | links inside auto-replies |
 | `REP_DEMO_INBOX` | optional | demo redirect — see §8 |
-| `OPENROUTER_API_KEY` + `OPENROUTER_CHAT_MODEL` | optional | AI polish layer |
+| `OPENROUTER_API_KEY` + `OPENROUTER_CHAT_MODEL` | optional | AI wording polish **and the assistant's model** (default `openai/gpt-5.4-mini`) |
+| `GROQ_API_KEY` | optional | server Whisper speech-to-text; without it, voice notes use the browser recognizer |
 | `SEED_ENABLED` | optional | `"true"` unlocks `POST /api/seed` |
 
 `.env.local` is git-ignored and must never be committed. Placeholders live in
@@ -77,11 +78,15 @@ Migration files are ordered `timestamp_name.sql`. Create new ones with
 | `/api/deals` | GET/POST/PATCH | admin | land-search stages + touch (resets stall clock) |
 | `/api/inspections` | GET/POST/PATCH | admin | bookings + status |
 | `/api/actions` | POST | admin | `follow-ups` \| `overdue-alerts` \| `reminders` |
+| `/api/ask` | POST | admin | grounded Q&A over the live board (text or transcript) |
+| `/api/email` | POST | admin | send an assistant-drafted follow-up; logs to `rep_emaillog` |
+| `/api/transcribe` | POST | admin | speech-to-text for voice notes (Groq Whisper) |
 | `/api/seed` | POST | admin + `SEED_ENABLED=true` | demo fixture |
 
 Everything except `/api/inquire` requires the Bearer token. `_lib/` holds
 shared code: `db`, `auth`, `cors`, `mail`, `compute` (all SLA logic),
-`reply` (auto-reply).
+`reply` (auto-reply), `board` (board assembly), and `ask` (digest → grounded
+answer → email draft).
 
 ## 7. Business rules (all in `api/_lib/compute.ts`)
 
@@ -93,6 +98,14 @@ shared code: `db`, `auth`, `cors`, `mail`, `compute` (all SLA logic),
 
 Due-lists are computed at render time; `POST /api/actions` dispatches
 synchronously and logs each send.
+
+**Assistant grounding (`_lib/ask.ts`):** the same fact discipline as the
+auto-reply, one level up. `buildDigest()` assembles a compact, authoritative
+view of the board (counts, overdue lists, leads waiting); `answerQuestion()`
+sends only that digest to the model and instructs it to answer exclusively
+from it. The model never touches the database, so it cannot fabricate
+properties, agents, or counts. No key → a deterministic digest-only answer
+still ships.
 
 ## 8. Email modes
 
@@ -161,3 +174,17 @@ Env vars are set once in the Vercel dashboard — same keys as `.env.local`.
 | Emails fail to send | Resend rejects recipient/domain | set `REP_DEMO_INBOX` to a real inbox |
 | Property photos 404 | `image_url` missing extension or file | must point at a real file in `public/properties/` |
 | Layout "looks clipped" on mobile | verify before fixing | DOM overflow/clip audit, not screenshots |
+
+## 13. Using the assistant
+
+Open the board and use the Ask the Desk panel. Type a question or send a
+voice note; the reply is spoken aloud (browser speech synthesis) with the
+written answer landing the instant speech starts, then revealing word by word.
+
+- **Voice notes** auto-send on the final transcript. Server Whisper when
+  `GROQ_API_KEY` is set; otherwise the browser recognizer (Chrome/Edge).
+- **Email drafts:** ask it to follow up with a lead and it returns a draft;
+  confirm in the panel and `POST /api/email` sends it, logged to `rep_emaillog`
+  (`REP_DEMO_INBOX` still redirects in demo mode).
+- **Grounding:** answers come only from the server-built digest (§7) — it
+  cannot invent board facts. Text-only, it needs no key at all.

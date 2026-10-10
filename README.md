@@ -7,7 +7,8 @@ Nobody can say who was emailed what, or when.
 
 This system closes those gaps. One screen where every lead carries a clock,
 every stall is flagged the day it happens, and the reply goes out before the
-buyer moves on to the next listing.
+buyer moves on to the next listing. And it's not just a board — an assistant
+answers questions about the book and drafts the chase.
 
 **Live demo:** https://realestate-portal-ten.vercel.app
 (login: any token set as `REP_ADMIN_TOKEN` — seed data included)
@@ -49,6 +50,22 @@ buyer moves on to the next listing.
 | Follow-ups | Who did we forget? Owed lists, one-click dispatch |
 | Email log | What actually went out? Full history incl. failed sends |
 
+## Ask the Desk — the grounded assistant
+
+The board is readable; now it's askable. Type a question or send a voice
+note, and the desk answers — out loud — and can draft the follow-up for you.
+
+- **Grounded, not guessy.** The server compiles a compact digest of the live
+  board (counts, overdue lists, leads waiting) and the model may only read it.
+  It cannot query the database, so it cannot invent a price, an agent, or a
+  count — a hallucinated number is structurally impossible here, not unlikely.
+- **Voice in, voice out.** Send a voice note (server Whisper when
+  `GROQ_API_KEY` is set; browser speech recognition otherwise) and hear the
+  reply read back (browser speech synthesis). The written answer lands the
+  instant speech starts, then reveals word by word.
+- **It can act.** Ask it to chase a lead and it returns a drafted email;
+  confirm and it sends — logged like every other dispatch.
+
 ## How the auto-reply stays honest
 
 Facts never come from the model. The reply is assembled from the matched
@@ -70,7 +87,10 @@ sitting.
 ## Stack
 
 - React 19 + Vite + Tailwind v4 — hand-rolled SVG charts, zero chart deps
-- Vercel serverless `api/*` (7 endpoints)
+- Vercel serverless `api/*` (10 endpoints)
+- Grounded assistant — digest→LLM Q&A (`/api/ask`), speech-to-text
+  (`/api/transcribe`), drafted email (`/api/email`)
+- Browser-native voice (speech synthesis + recognition); optional Groq Whisper
 - InsForge Postgres — lowercase `rep_*` tables, migrations in `migrations/`
 - Resend SMTP via nodemailer
 - Optional OpenRouter polish (deterministic fallback always ships)
